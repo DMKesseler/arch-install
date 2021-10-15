@@ -23,4 +23,6 @@ Run `sudo pacman -S xorg-server`
 * `sudo pacman -S lightdm lightdm-gtk-greeter`
 * `systemctl enable lightdm`
 
+**Todo: check which specific xfce packages are needed from the 2 groups**
+
 ### Reboot the machine
