@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# List available drives
+fdisk -l
+
+# Prompt user to input the drive to partition
+read -p "Enter the drive to partition (e.g. /dev/sda): " drive
+
+# Create new partition table
+sfdisk --label gpt "$drive" << EOF
+,550M,U,*
+,2G,S
+,,L
+EOF
+
+# Format partitions
+mkfs.fat -F32 /dev/sda1
+mkswap /dev/sda2
+mkfs.ext4 /dev/sda3
+
+# Enable swap
+sudo swapon /dev/sda2
+
+# Mount sda3 to /mnt
+mount /dev/sda3 /mnt
+
+# Install arch
+pacstrap /mnt base base-devel linux linux-firmware
+
+# Generate fstab file
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# Change directory
+arch-chroot /mnt
+
+# Set time and locale
+ln -sf /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
+hwclock --systohc
+sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/g' /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" | tee /etc/locale.conf
+
+# Set hostname config
+read -p "Enter your hostname: " hostname
+echo "$hostname" | tee /etc/hostname
+echo "127.0.0.1 localhost
+
+::1 localhost
+
+127.0.1.1 $hostname" | tee /etc/hosts
+
+
+# Set root password
+read -p "Enter your desired root password: " | passwd root
+
+# Set non-root user
+read -p "Enter non-root username: " nonroot && useradd -m -G wheel,audio,video,optical,storage "$nonroot"
+read -p "Enter your desired non-root password: " | passwd "$nonroot"
+
+# Set vim as editer and set sudoers setting
+EDITOR=vim
+sed -i 's/^#%wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g' /etc/sudoers
+
+# Install and setup GRUB
+pacman -S grub efibootmgr dosfstools os-prober mtools
+mkir /boot/EFI
+mount /dev/sda1 /boot/EFI
+grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
+mkdir -p /boot/grub/locale
+cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Programs to make sure cable and wifi works
+pacman -S networkmanager wpa_supplicant wireless_tools netctl dialog
+systemctl enable NetworkManager
+
+# Exit and unmount
+exit
+umount -a
+
+echo "All things are set up. You can reboot after taking out the live image"
