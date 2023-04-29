@@ -7,7 +7,7 @@ fdisk -l
 read -p "Enter the drive to partition (e.g. /dev/sda): " drive
 
 # Create new partition table
-sudo sfdisk --label gpt /dev/sda << EOF
+sudo sfdisk --label gpt "$drive" << EOF
 ,550M,U,*
 ,2G,S
 ,,L
