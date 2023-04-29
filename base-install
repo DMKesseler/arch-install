@@ -51,11 +51,11 @@ echo "127.0.0.1 localhost
 
 
 # Set root password
-read -p "Enter your desired root password: " | passwd root
+read -p "Enter your desired root password: " | passwd -u root
 
 # Set non-root user
 read -p "Enter non-root username: " nonroot && useradd -m -G wheel,audio,video,optical,storage "$nonroot"
-read -p "Enter your desired non-root password: " | passwd "$nonroot"
+read -p "Enter your desired non-root password: " | passwd -u "$nonroot"
 
 # Set vim as editer and set sudoers setting
 EDITOR=vim
@@ -63,7 +63,7 @@ sed -i 's/^#%wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/g' /etc/sudoers
 
 # Install and setup GRUB
 pacman -S grub efibootmgr dosfstools os-prober mtools
-mkir /boot/EFI
+mkdir /boot/EFI
 mount /dev/sda1 /boot/EFI
 grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck
 mkdir -p /boot/grub/locale
