@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# List available drives
+fdisk -l
+
+# Prompt user to input the drive to partition
+read -p "Enter the drive to partition (e.g. /dev/sda): " drive
+
+# Use sfdisk to create the partitions
+sfdisk "$drive" <<EOF
+label: gpt
+unit: sectors
+
+# Boot partition
+2048, +550M, EF00,
+
+# Swap partition
+, +2G, 8200,
+
+# Root partition
+, , 8300,
+EOF
+
+# Display the new partition table
+fdisk -l "$drive"
