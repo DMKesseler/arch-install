@@ -6,20 +6,17 @@ fdisk -l
 # Prompt user to input the drive to partition
 read -p "Enter the drive to partition (e.g. /dev/sda): " drive
 
-# Use sfdisk to create the partitions
-sfdisk "$drive" <<EOF
-label: gpt
-unit: sectors
-
-# Boot partition
-2048, +550M, EF00,
-
-# Swap partition
-, +2G, 8200,
-
-# Root partition
-, , 8300,
+# Create new partition table
+sudo sfdisk --label gpt /dev/sda << EOF
+,550M,U,*
+,2G,S
+,,L
 EOF
 
-# Display the new partition table
-fdisk -l "$drive"
+# Format partitions
+sudo mkfs.fat -F32 /dev/sda1
+sudo mkswap /dev/sda2
+sudo mkfs.ext4 /dev/sda3
+
+# Enable swap
+sudo swapon /dev/sda2
